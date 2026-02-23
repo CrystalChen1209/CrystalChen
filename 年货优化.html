@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>年货采购优化 · 多选组合版</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Microsoft YaHei', sans-serif; }
+        body { background: #f5f5f5; margin: 0; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 25px; }
+        h1 { color: #c41e3a; text-align: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; }
+        h2 { font-size: 1.3rem; color: #333; border-left: 6px solid #c41e3a; padding-left: 12px; margin: 25px 0 10px; }
+        .settings-panel { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
+        .settings-item { display: flex; align-items: center; gap: 8px; }
+        .settings-item label { font-weight: 600; color: #444; min-width: 70px; }
+        .settings-item input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; width: 150px; }
+        .model-section { background: #fff3e0; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .model-group { margin-bottom: 20px; }
+        .group-title { font-weight: 600; margin-bottom: 10px; color: #555; }
+        .option-row { display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+        .option-item { display: flex; flex-direction: column; background: #fff; padding: 12px 18px; border-radius: 8px; border: 1px solid #e0e0e0; min-width: 220px; }
+        .option-item input[type="radio"], .option-item input[type="checkbox"] { margin-right: 8px; transform: scale(1.1); }
+        .option-header { display: flex; align-items: center; margin-bottom: 5px; }
+        .option-desc { font-size: 0.85rem; color: #666; margin-left: 25px; line-height: 1.4; }
+        .param-panel { background: #e9ecef; padding: 15px; border-radius: 8px; margin-top: 15px; display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
+        .param-item { display: flex; align-items: center; gap: 8px; }
+        .param-item label { font-weight: 500; min-width: 100px; }
+        .param-item input { width: 100px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-small { background-color: #6c757d; color: white; border: none; padding: 5px 12px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; }
+        .btn-small:hover { background-color: #545b62; }
+        .checkbox-group { display: flex; gap: 20px; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.95rem; }
+        th { background-color: #f0f0f0; padding: 12px 5px; border: 1px solid #ddd; font-weight: 600; }
+        td { border: 1px solid #ddd; padding: 8px 5px; }
+        td input { width: 100%; padding: 6px 4px; border: 1px solid #ccc; border-radius: 4px; }
+        td input::placeholder { color: #aaa; font-style: italic; font-size: 0.9rem; }
+        .btn-group { display: flex; gap: 10px; margin: 15px 0 5px; }
+        button { background-color: #c41e3a; color: white; border: none; padding: 10px 20px; border-radius: 30px; font-size: 1rem; cursor: pointer; }
+        button:hover { background-color: #a01830; }
+        button.secondary { background-color: #6c757d; }
+        .result-box { background: #e8f4fd; border-radius: 10px; padding: 20px; margin-top: 30px; border: 1px solid #b8daff; }
+        .summary { display: flex; flex-wrap: wrap; gap: 30px; margin-bottom: 20px; }
+        .summary-item { background: white; padding: 12px 25px; border-radius: 40px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .summary-item span { font-weight: 700; color: #c41e3a; margin-left: 10px; font-size: 1.3rem; }
+        .footer { text-align: center; color: #777; margin-top: 30px; }
+        .info { color: #0c5460; background-color: #d1ecf1; border: 1px solid #bee5eb; border-radius: 5px; padding: 8px; margin: 10px 0; }
+        .hint { color: #888; font-size: 0.9rem; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🧧 春节年货采购优化 · 多选组合版</h1>
+    
+    <!-- 全局设置 -->
+    <div class="settings-panel">
+        <div class="settings-item">
+            <label>总预算 (元):</label>
+            <input type="number" id="budget" value="8000" min="0" step="100">
+        </div>
+        <div class="settings-item">
+            <label>剩余预算:</label>
+            <span id="budgetRemaining" style="font-weight:700; color:#28a745;">8000</span>
+        </div>
+    </div>
+
+    <!-- 模型选择区域 -->
+    <div class="model-section">
+        <!-- 目标函数（单选） -->
+        <div class="model-group">
+            <div class="group-title">🎯 目标函数类型（三选一）</div>
+            <div class="option-row">
+                <div class="option-item">
+                    <div class="option-header">
+                        <input type="radio" name="objective" id="objBase" value="base" checked>
+                        <label for="objBase"><strong>基础模型</strong></label>
+                    </div>
+                    <div class="option-desc">最大化家庭总满意度（所有成员评分之和），不考虑代际差异。</div>
+                </div>
+                <div class="option-item">
+                    <div class="option-header">
+                        <input type="radio" name="objective" id="objMulti" value="multi">
+                        <label for="objMulti"><strong>多目标加权</strong></label>
+                    </div>
+                    <div class="option-desc">为选定的代际设置权重，最大化加权满意度，平衡代际偏好。</div>
+                </div>
+                <div class="option-item">
+                    <div class="option-header">
+                        <input type="radio" name="objective" id="objNonlinear" value="nonlinear">
+                        <label for="objNonlinear"><strong>非线性效用</strong></label>
+                    </div>
+                    <div class="option-desc">使用对数函数 U = a·ln(1+x) 模拟边际效用递减，更符合实际消费心理。</div>
+                </div>
+            </div>
+            
+            <!-- 多目标权重面板（包含代际选择） -->
+            <div id="multiPanel" class="param-panel" style="display: none; flex-direction: column; align-items: flex-start;">
+                <div style="width:100%;">
+                    <div class="group-title" style="margin-top:0;">👥 参与加权的代际</div>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="useG" value="G" checked> 祖辈</label>
+                        <label><input type="checkbox" id="useF" value="F" checked> 父辈</label>
+                        <label><input type="checkbox" id="useC" value="C" checked> 子辈</label>
+                    </div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center; width:100%;">
+                    <div class="param-item" id="wG_item"><label>祖辈权重:</label><input type="number" id="wG" value="0.3" min="0" max="1" step="0.05"></div>
+                    <div class="param-item" id="wF_item"><label>父辈权重:</label><input type="number" id="wF" value="0.5" min="0" max="1" step="0.05"></div>
+                    <div class="param-item" id="wC_item"><label>子辈权重:</label><input type="number" id="wC" value="0.2" min="0" max="1" step="0.05"></div>
+                    <button class="btn-small" id="ahpBtn">📐 AHP计算权重</button>
+                    <span style="color:#666;">(点击后通过两两比较自动计算)</span>
+                </div>
+                <div style="font-size:0.9rem; color:#555; margin-top:5px;">权重归一化仅针对选中的代际，未选中代际权重视为0。</div>
+            </div>
+        </div>
+
+        <!-- 附加约束（可多选） -->
+        <div class="model-group">
+            <div class="group-title">🛡️ 附加约束（可多选）</div>
+            <div class="option-row">
+                <div class="option-item">
+                    <div class="option-header">
+                        <input type="checkbox" id="robustCheck">
+                        <label for="robustCheck"><strong>鲁棒优化</strong></label>
+                    </div>
+                    <div class="option-desc">考虑价格波动（如涨价10%），设定保护预算 Γ，确保在最坏情况下不超预算。</div>
+                </div>
+            </div>
+            <!-- 鲁棒参数面板（默认隐藏） -->
+            <div id="robustPanel" class="param-panel" style="display: none; margin-top:15px;">
+                <div class="param-item"><label>价格波动幅度 (%):</label><input type="number" id="epsilon" value="10" min="0" max="100" step="1"></div>
+                <div class="param-item"><label>保护预算 Γ (最多涨价商品数):</label><input type="number" id="gamma" value="3" min="1" step="1"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 商品表格 -->
+    <h2>📦 商品信息</h2>
+    <div class="hint">下方表格中，将鼠标悬停在输入框上可查看示例格式，直接输入您的数据即可。可通过下方按钮添加或删除行。</div>
+    <table id="goodsTable">
+        <thead id="tableHeader"></thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+
+    <div class="btn-group">
+        <button id="addRowBtn">➕ 添加一行</button>
+        <button id="removeRowBtn">➖ 删除最后一行</button>
+        <button id="calcBtn" style="margin-left:auto;">🚀 开始优化</button>
+    </div>
+
+    <!-- 结果 -->
+    <div id="resultArea" class="result-box" style="display: none;"></div>
+    <div class="footer">基于论文《春节年货采购的多目标优化配置模型》扩展版</div>
+</div>
+
+<script>
+    // 当前选中的目标函数
+    let objective = 'base';
+    // 是否启用鲁棒
+    let robustEnabled = false;
+
+    // 列定义
+    const baseCols = ['商品名称', '单价(元)', '不浪费上限', '刚性需求数量', '家庭总评分'];
+    const multiCols = ['商品名称', '单价(元)', '不浪费上限', '刚性需求数量', '祖辈评分和', '父辈评分和', '子辈评分和'];
+    const nonlinearCols = baseCols;
+
+    // 获取当前应显示的列
+    function getCurrentCols() {
+        if (objective === 'multi') return multiCols;
+        return baseCols;
+    }
+
+    // 获取placeholder文本
+    function getPlaceholder(col) {
+        const map = {
+            '商品名称': '例如 新衣',
+            '单价(元)': '例如 100',
+            '不浪费上限': '例如 6',
+            '刚性需求数量': '例如 0 (非刚性)',
+            '家庭总评分': '例如 150',
+            '祖辈评分和': '例如 9',
+            '父辈评分和': '例如 7',
+            '子辈评分和': '例如 10'
+        };
+        return map[col] || '请输入';
+    }
+
+    // 渲染表格（无默认值，仅placeholder）
+    function renderTable() {
+        const header = document.getElementById('tableHeader');
+        const body = document.getElementById('tableBody');
+        const cols = getCurrentCols();
+        
+        let headerHtml = '<tr>';
+        cols.forEach(col => headerHtml += `<th>${col}</th>`);
+        headerHtml += '</tr>';
+        header.innerHTML = headerHtml;
+        
+        // 保留现有行数，默认为3行空行
+        const rows = body.children.length || 3;
+        let bodyHtml = '';
+        for (let i = 0; i < rows; i++) {
+            bodyHtml += '<tr>';
+            cols.forEach(col => {
+                let placeholder = getPlaceholder(col);
+                bodyHtml += `<td><input type="text" placeholder="${placeholder}"></td>`;
+            });
+            bodyHtml += '</tr>';
+        }
+        body.innerHTML = bodyHtml;
+    }
+
+    // 更新面板显示
+    function updatePanels() {
+        document.getElementById('multiPanel').style.display = (objective === 'multi') ? 'flex' : 'none';
+        document.getElementById('robustPanel').style.display = robustEnabled ? 'flex' : 'none';
+        updateWeightVisibility();
+        renderTable();
+    }
+
+    function updateWeightVisibility() {
+        const useG = document.getElementById('useG').checked;
+        const useF = document.getElementById('useF').checked;
+        const useC = document.getElementById('useC').checked;
+        document.getElementById('wG_item').style.display = useG ? 'flex' : 'none';
+        document.getElementById('wF_item').style.display = useF ? 'flex' : 'none';
+        document.getElementById('wC_item').style.display = useC ? 'flex' : 'none';
+    }
+
+    // 监听目标函数单选
+    document.querySelectorAll('input[name="objective"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            objective = this.value;
+            updatePanels();
+        });
+    });
+
+    document.getElementById('useG').addEventListener('change', updateWeightVisibility);
+    document.getElementById('useF').addEventListener('change', updateWeightVisibility);
+    document.getElementById('useC').addEventListener('change', updateWeightVisibility);
+
+    document.getElementById('robustCheck').addEventListener('change', function() {
+        robustEnabled = this.checked;
+        updatePanels();
+    });
+
+    // AHP权重计算（简易版，只对选中的代际进行）
+    document.getElementById('ahpBtn').addEventListener('click', function() {
+        const useG = document.getElementById('useG').checked;
+        const useF = document.getElementById('useF').checked;
+        const useC = document.getElementById('useC').checked;
+        const selected = [];
+        if (useG) selected.push('G');
+        if (useF) selected.push('F');
+        if (useC) selected.push('C');
+        if (selected.length < 2) {
+            alert('至少需要选中两个代际才能进行AHP比较。');
+            return;
+        }
+
+        let values = {};
+        if (selected.includes('G') && selected.includes('F')) {
+            let val = prompt('请比较祖辈 vs 父辈的重要性（输入数字：1=同等重要，3=祖辈稍重要，1/3=父辈稍重要）：', '0.5');
+            values['GF'] = parseFloat(val) || 1;
+        }
+        if (selected.includes('G') && selected.includes('C')) {
+            let val = prompt('请比较祖辈 vs 子辈的重要性：', '2');
+            values['GC'] = parseFloat(val) || 1;
+        }
+        if (selected.includes('F') && selected.includes('C')) {
+            let val = prompt('请比较父辈 vs 子辈的重要性：', '3');
+            values['FC'] = parseFloat(val) || 1;
+        }
+
+        let order = selected;
+        let matrix = [];
+        for (let i = 0; i < order.length; i++) {
+            matrix[i] = [];
+            for (let j = 0; j < order.length; j++) {
+                if (i === j) matrix[i][j] = 1;
+                else {
+                    let key = order[i] + order[j];
+                    let revKey = order[j] + order[i];
+                    if (values[key]) matrix[i][j] = values[key];
+                    else if (values[revKey]) matrix[i][j] = 1 / values[revKey];
+                    else matrix[i][j] = 1;
+                }
+            }
+        }
+
+        let weights = [];
+        for (let i = 0; i < order.length; i++) {
+            let product = 1;
+            for (let j = 0; j < order.length; j++) product *= matrix[i][j];
+            weights.push(Math.pow(product, 1/order.length));
+        }
+        let sum = weights.reduce((a,b) => a+b, 0);
+        weights = weights.map(w => w/sum);
+
+        for (let idx = 0; idx < order.length; idx++) {
+            if (order[idx] === 'G') document.getElementById('wG').value = weights[idx].toFixed(3);
+            else if (order[idx] === 'F') document.getElementById('wF').value = weights[idx].toFixed(3);
+            else if (order[idx] === 'C') document.getElementById('wC').value = weights[idx].toFixed(3);
+        }
+
+        alert('AHP计算完成，权重已自动填入。');
+    });
+
+    // 添加行
+    document.getElementById('addRowBtn').addEventListener('click', function() {
+        const body = document.getElementById('tableBody');
+        const cols = getCurrentCols();
+        let rowHtml = '<tr>';
+        cols.forEach(col => {
+            let placeholder = getPlaceholder(col);
+            rowHtml += `<td><input type="text" placeholder="${placeholder}"></td>`;
+        });
+        rowHtml += '</tr>';
+        body.insertAdjacentHTML('beforeend', rowHtml);
+    });
+
+    // 删除行
+    document.getElementById('removeRowBtn').addEventListener('click', function() {
+        const body = document.getElementById('tableBody');
+        if (body.children.length > 1) body.removeChild(body.lastChild);
+    });
+
+    // ========== 优化计算 ==========
+    document.getElementById('calcBtn').addEventListener('click', function() {
+        const budget = parseFloat(document.getElementById('budget').value);
+        const rows = document.getElementById('tableBody').children;
+        const cols = getCurrentCols();
+        
+        let names = [], prices = [], ub = [], mandatory = [], scores = [];
+        let G = [], F = [], C = [];
+        
+        for (let row of rows) {
+            const inputs = row.querySelectorAll('input');
+            let rowData = {};
+            inputs.forEach((input, idx) => {
+                rowData[cols[idx]] = input.value.trim();
+            });
+            
+            const name = rowData['商品名称'];
+            if (!name) continue;  // 跳过空行
+            
+            names.push(name);
+            prices.push(parseFloat(rowData['单价(元)']) || 0);
+            ub.push(parseInt(rowData['不浪费上限']) || 0);
+            mandatory.push(parseInt(rowData['刚性需求数量']) || 0);
+            
+            if (objective === 'multi') {
+                let g = parseFloat(rowData['祖辈评分和']) || 0;
+                let f = parseFloat(rowData['父辈评分和']) || 0;
+                let c = parseFloat(rowData['子辈评分和']) || 0;
+                G.push(g); F.push(f); C.push(c);
+                scores.push(g + f + c);
+            } else {
+                scores.push(parseFloat(rowData['家庭总评分']) || 0);
+            }
+        }
+        
+        if (names.length === 0) {
+            alert('请至少填写一种商品！');
+            return;
+        }
+
+        let remaining = budget;
+        let buy = new Array(names.length).fill(0);
+        
+        // 刚性需求
+        for (let i = 0; i < names.length; i++) {
+            if (mandatory[i] > 0) {
+                let qty = Math.min(mandatory[i], ub[i]);
+                let cost = prices[i] * qty;
+                if (cost <= remaining) {
+                    buy[i] = qty;
+                    remaining -= cost;
+                } else {
+                    alert(`预算不足以购买刚性需求的 ${names[i]}`);
+                    return;
+                }
+            }
+        }
+        
+        if (objective === 'nonlinear') {
+            nonlinearGreedy();
+        } else {
+            normalGreedy();
+        }
+        
+        function normalGreedy() {
+            let items = [];
+            for (let i = 0; i < names.length; i++) {
+                if (buy[i] < ub[i] && prices[i] > 0) {
+                    let ratio = scores[i] / prices[i];
+                    items.push({idx: i, ratio: ratio});
+                }
+            }
+            items.sort((a, b) => b.ratio - a.ratio);
+            
+            for (let item of items) {
+                let i = item.idx;
+                let maxQty = ub[i] - buy[i];
+                let possibleQty = Math.floor(remaining / prices[i]);
+                let qty = Math.min(maxQty, possibleQty);
+                if (qty > 0) {
+                    buy[i] += qty;
+                    remaining -= prices[i] * qty;
+                }
+            }
+            if (robustEnabled) {
+                robustAdjust();
+            } else {
+                showResults();
+            }
+        }
+        
+        function nonlinearGreedy() {
+            let items = [];
+            for (let i = 0; i < names.length; i++) {
+                if (buy[i] < ub[i] && prices[i] > 0) {
+                    let a = scores[i] / Math.log(2);
+                    let current = buy[i];
+                    let marginal = a * (Math.log(2 + current) - Math.log(1 + current));
+                    let ratio = marginal / prices[i];
+                    items.push({idx: i, ratio: ratio});
+                }
+            }
+            items.sort((a, b) => b.ratio - a.ratio);
+            
+            for (let item of items) {
+                let i = item.idx;
+                let maxQty = ub[i] - buy[i];
+                let possibleQty = Math.floor(remaining / prices[i]);
+                let qty = Math.min(maxQty, possibleQty);
+                if (qty > 0) {
+                    buy[i] += qty;
+                    remaining -= prices[i] * qty;
+                }
+            }
+            if (robustEnabled) {
+                robustAdjust();
+            } else {
+                showResults();
+            }
+        }
+        
+        function robustAdjust() {
+            let tempBuy = [...buy];
+            let tempRemaining = remaining;
+            let epsilon = parseFloat(document.getElementById('epsilon').value) / 100;
+            let gamma = parseInt(document.getElementById('gamma').value);
+            
+            let costInc = [];
+            for (let i = 0; i < names.length; i++) {
+                if (tempBuy[i] > 0) {
+                    costInc.push({idx: i, extra: prices[i] * tempBuy[i] * epsilon});
+                }
+            }
+            costInc.sort((a, b) => b.extra - a.extra);
+            let totalExtra = 0;
+            for (let i = 0; i < Math.min(gamma, costInc.length); i++) {
+                totalExtra += costInc[i].extra;
+            }
+            let worstTotal = budget - tempRemaining + totalExtra;
+            
+            if (worstTotal > budget) {
+                alert(`鲁棒优化：最坏情况下可能超支 ${(worstTotal - budget).toFixed(2)} 元，将自动调整。`);
+                while (worstTotal > budget) {
+                    let maxIdx = -1, maxVal = -1;
+                    for (let i = 0; i < names.length; i++) {
+                        if (tempBuy[i] > 0 && prices[i] * tempBuy[i] > maxVal) {
+                            maxVal = prices[i] * tempBuy[i];
+                            maxIdx = i;
+                        }
+                    }
+                    if (maxIdx === -1) break;
+                    tempBuy[maxIdx]--;
+                    tempRemaining += prices[maxIdx];
+                    
+                    costInc = [];
+                    for (let i = 0; i < names.length; i++) {
+                        if (tempBuy[i] > 0) {
+                            costInc.push({idx: i, extra: prices[i] * tempBuy[i] * epsilon});
+                        }
+                    }
+                    costInc.sort((a, b) => b.extra - a.extra);
+                    totalExtra = 0;
+                    for (let i = 0; i < Math.min(gamma, costInc.length); i++) {
+                        totalExtra += costInc[i].extra;
+                    }
+                    worstTotal = budget - tempRemaining + totalExtra;
+                }
+                buy = tempBuy;
+                remaining = tempRemaining;
+            }
+            showResults();
+        }
+        
+        function showResults() {
+            let totalCost = budget - remaining;
+            let totalSat = 0;
+            for (let i = 0; i < names.length; i++) {
+                totalSat += scores[i] * buy[i];
+            }
+            
+            let resultHtml = '<h2 style="margin-top:0;">✅ 最优采购方案</h2>';
+            resultHtml += '<div class="summary">';
+            resultHtml += `<div class="summary-item">总花费 <span>${totalCost.toFixed(2)}</span> 元</div>`;
+            resultHtml += `<div class="summary-item">剩余预算 <span>${remaining.toFixed(2)}</span> 元</div>`;
+            resultHtml += `<div class="summary-item">总满意度 <span>${totalSat.toFixed(2)}</span> 分</div>`;
+            
+            if (objective === 'multi') {
+                const useG = document.getElementById('useG').checked;
+                const useF = document.getElementById('useF').checked;
+                const useC = document.getElementById('useC').checked;
+                let wG = useG ? parseFloat(document.getElementById('wG').value) : 0;
+                let wF = useF ? parseFloat(document.getElementById('wF').value) : 0;
+                let wC = useC ? parseFloat(document.getElementById('wC').value) : 0;
+                let totalW = wG + wF + wC;
+                if (totalW > 0) {
+                    wG /= totalW; wF /= totalW; wC /= totalW;
+                }
+                
+                let totalG = 0, totalF = 0, totalC = 0;
+                for (let i = 0; i < names.length; i++) {
+                    totalG += G[i] * buy[i];
+                    totalF += F[i] * buy[i];
+                    totalC += C[i] * buy[i];
+                }
+                let weighted = (useG ? wG*totalG : 0) + (useF ? wF*totalF : 0) + (useC ? wC*totalC : 0);
+                resultHtml += `<div class="summary-item">加权和 <span>${weighted.toFixed(2)}</span></div>`;
+                resultHtml += '</div>';
+                let detail = '';
+                if (useG) detail += `祖辈满意度: ${totalG.toFixed(2)} `;
+                if (useF) detail += `父辈满意度: ${totalF.toFixed(2)} `;
+                if (useC) detail += `子辈满意度: ${totalC.toFixed(2)} `;
+                resultHtml += `<p>${detail}</p>`;
+            } else {
+                resultHtml += '</div>';
+            }
+            
+            if (robustEnabled) {
+                let epsilon = document.getElementById('epsilon').value;
+                let gamma = document.getElementById('gamma').value;
+                resultHtml += `<p class="info">已启用鲁棒优化：波动 ${epsilon}%，保护预算 Γ=${gamma}，方案已考虑最坏情况。</p>`;
+            }
+            if (objective === 'nonlinear') {
+                resultHtml += `<p class="info">已启用非线性效用：使用对数函数 U = a·ln(1+x) 计算边际性价比。</p>`;
+            }
+            
+            resultHtml += '<h3>🛒 采购清单</h3><table><tr><th>商品</th><th>数量</th><th>花费</th><th>满意度贡献</th></tr>';
+            for (let i = 0; i < names.length; i++) {
+                if (buy[i] > 0) {
+                    resultHtml += `<tr><td>${names[i]}</td><td>${buy[i]}</td><td>${(prices[i]*buy[i]).toFixed(2)}</td><td>${(scores[i]*buy[i]).toFixed(2)}</td></tr>`;
+                }
+            }
+            resultHtml += '</table>';
+            
+            document.getElementById('resultArea').innerHTML = resultHtml;
+            document.getElementById('resultArea').style.display = 'block';
+            document.getElementById('budgetRemaining').innerText = remaining.toFixed(2);
+        }
+    });
+
+    // 初始化
+    updatePanels();
+</script>
+</body>
+</html>
